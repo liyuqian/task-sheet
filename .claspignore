@@ -1,0 +1,7 @@
+# ignore all files…
+**/**
+
+# except
+!appsscript.json
+!src/*.ts
+!test/*.ts
