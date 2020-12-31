@@ -1,12 +1,10 @@
 export default { createSheet, onEdit };
 
 const kTasks = 'Tasks';
-const kNextUniqueId = 'NEXT_UNIQUE_ID';
 
-// Start from this 1234567 for easier search and spotting.
-const kFirstUniqueId = 1234567;
-
-const kNextUniqueIdRow = 2;
+// No collision is expected for ~36^(length / 2) random IDs.
+// For length = 8, that's about 1000^2 = 1 million.
+const kRandomIdLength = 8;
 
 const kIdColName = 'id';
 const kTitleColName = 'title';
@@ -55,14 +53,6 @@ function initTask(sheet: GoogleAppsScript.Spreadsheet.Sheet): void {
   for (let i = 0; i < kColCount; i += 1) {
     row1.getCell(1, i + 1).setValue(kColNames[i]);
   }
-  const row2 = sheet.getRange(2, 1, 1, kColCount);
-  row2.getCell(1, kIdColIndex).setValue(kFirstUniqueId);
-  row2.getCell(1, kTitleColIndex).setValue(kNextUniqueId);
-  if (row2.getRow() !== kNextUniqueIdRow) {
-    throw new Error('Mismatched kNextUniqueIdRow '
-        + `(${row2.getRow()} != ${kNextUniqueIdRow})`);
-  }
-  sheet.hideRow(row2);
 }
 
 interface EditEvent {
@@ -82,11 +72,11 @@ function onEdit(e: EditEvent): void {
 function onTasksEdit(e: EditEvent): void {
   const sheet = e.range.getSheet();
   for (let i = 1; i <= e.range.getNumRows(); i += 1) {
-    genUniqueIdIfNeeded(sheet, e.range.getRowIndex() + i - 1);
+    genIdIfNeeded(sheet, e.range.getRowIndex() + i - 1);
   }
 }
 
-function genUniqueIdIfNeeded(
+function genIdIfNeeded(
   sheet: GoogleAppsScript.Spreadsheet.Sheet,
   rowIndex: number,
 ): void {
@@ -94,10 +84,16 @@ function genUniqueIdIfNeeded(
   const titleCell = fullRow.getCell(1, kTitleColIndex);
   const idCell = fullRow.getCell(1, kIdColIndex);
   if (idCell.isBlank() && !titleCell.isBlank()) {
-    const nextIdCell = sheet.getRange(kNextUniqueIdRow, kIdColIndex);
-    idCell.setValue(nextIdCell.getValue());
-    nextIdCell.setValue(parseInt(idCell.getValue(), 10) + 1);
-    Logger.log(`Set id ${idCell.getValue()} for row ${fullRow.getRowIndex()}; `
-      + `next unique id updated to ${nextIdCell.getValue()}`);
+    idCell.setValue(genRandomId(kRandomIdLength));
+    idCell.setFontFamily('Courier New')
+    Logger.log(`Set id ${idCell.getValue()} for row ${fullRow.getRowIndex()}.`);
   }
+}
+
+function genRandomId(length: number) {
+  let id = '';
+  for (let i = 0; i < length; i += 1) {
+    id += Math.floor(Math.random() * 36).toString(36);
+  }
+  return id;
 }
