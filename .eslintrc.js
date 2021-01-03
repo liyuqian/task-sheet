@@ -11,6 +11,7 @@ module.exports = {
     '@typescript-eslint/no-use-before-define': [
       2, 
       { 'functions': false, 'classes': false },
-    ]
+    ],
+    // 'import/prefer-default-export': ['off']
   }
 };

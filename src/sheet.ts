@@ -1,51 +1,21 @@
-export default { createSheet, onEdit };
+import {
+  kTasks,
+  kPlan,
+  kTasksColNames,
+  kTasksColCount,
+  kPlanColNames,
+  kCommonColCount,
+  kIdColIndex,
+  kTitleColIndex,
+  kStartDateColIndex,
+  EditEvent,
+  findRowIndexById,
+  format,
+} from './common';
 
-const kTasks = 'Tasks';
-const kPlan = 'Plan';
+import { initPlan, onPlanEdit } from './plan';
 
-// No collision is expected for ~36^(length / 2) random IDs.
-// For length = 8, that's about 1000^2 = 1 million.
-const kRandomIdLength = 8;
-
-const kIdColName = 'id';
-const kTitleColName = 'title';
-const kDetailsColName = 'details';
-const kDueDateColName = 'due date';
-const kLabelsColName = 'labels';
-const kDependenciesColName = 'dependencies';
-const kStartDateColName = 'start date';
-const kCompleteDateColName = 'complete date';
-const kObsoleteDateColName = 'obsolete date';
-const kProgressColName = 'progress';
-const kNotesColName = 'notes';
-
-const kTasksColNames = [
-  kIdColName,
-  kTitleColName,
-  kDetailsColName,
-  kDueDateColName,
-  kLabelsColName,
-  kDependenciesColName,
-  kStartDateColName,
-  kCompleteDateColName,
-  kObsoleteDateColName,
-];
-const kTasksColCount = kTasksColNames.length;
-
-const kPlanColNames = [
-  kIdColName,
-  kTitleColName,
-  kDetailsColName,
-  kProgressColName,
-  kNotesColName,
-];
-const kPlanColCount = kPlanColNames.length;
-const kCommonColCount = 3; // identical columns between tasks and plan sheets
-
-// All indices below are 1-based instead 0-based.
-const kIdColIndex = kTasksColNames.indexOf(kIdColName) + 1;
-const kTitleColIndex = kTasksColNames.indexOf(kTitleColName) + 1;
-const kStartDateColIndex = kTasksColNames.indexOf(kStartDateColName) + 1;
+export { createSheet, deleteOldTriggers, onEdit };
 
 function createSheet(): void {
   checkIntegrity();
@@ -63,6 +33,14 @@ function createSheet(): void {
   initTasks(sheet2);
   initPlan(sheet3);
   ScriptApp.newTrigger('onEdit').forSpreadsheet(spreadsheet).onEdit().create();
+}
+
+// Be careful, this will remove all triggers associated with this project.
+// Hence all previous spreadsheets created by this project will lose their
+// triggers.
+function deleteOldTriggers(): void {
+  const triggers = ScriptApp.getProjectTriggers();
+  triggers.forEach((trigger) => ScriptApp.deleteTrigger(trigger));
 }
 
 function checkIntegrity(): void {
@@ -83,26 +61,12 @@ function initTasks(sheet: GoogleAppsScript.Spreadsheet.Sheet): void {
   }
 }
 
-function initPlan(sheet: GoogleAppsScript.Spreadsheet.Sheet): void {
-  sheet.setFrozenRows(1);
-  const row1 = sheet.getRange(1, 1, 1, kPlanColCount);
-  row1.setHorizontalAlignment('center');
-  for (let i = 0; i < kPlanColCount; i += 1) {
-    row1.getCell(1, i + 1).setValue(kPlanColNames[i]);
-  }
-}
-
-interface EditEvent {
-  oldValue: any;
-  value: any;
-  range: GoogleAppsScript.Spreadsheet.Range;
-  source: GoogleAppsScript.Spreadsheet.Spreadsheet;
-}
-
 function onEdit(e: EditEvent): void {
   const sheet = e.range.getSheet();
   if (sheet.getName() === kTasks) {
     onTasksEdit(e);
+  } else if (sheet.getName() === kPlan) {
+    onPlanEdit(e);
   }
 }
 
@@ -133,20 +97,19 @@ function copyToPlanIfStartedToday(
   }
 
   const planSheet = tasksSheet.getParent().getSheetByName(kPlan);
-  const planRowCount = planSheet.getDataRange().getNumRows();
-  const planTaskIds = planSheet.getRange(1, 1, planRowCount);
-  const finder = planTaskIds.createTextFinder(taskId);
-  if (finder.findAll().length > 0) {
-    Logger.log(`Skip existing ${taskId} (found ${finder.findAll().length})`);
+  const findResult = findRowIndexById(planSheet, taskId);
+  if (findResult !== -1) {
+    Logger.log(`Skip existing ${taskId} at row ${findResult}.`);
     return;
   }
   const copyRange = tasksSheet.getRange(rowIndex, 1, 1, kCommonColCount);
+  const planRowCount = planSheet.getDataRange().getNumRows();
   copyRange.copyTo(planSheet.getRange(planRowCount + 1, 1));
 }
 
-function format(date: Date): string {
-  return `${date.getMonth()}/${date.getDay()}/${date.getFullYear()}`;
-}
+// No collision is expected for ~36^(length / 2) random IDs.
+// For length = 8, that's about 1000^2 = 1 million.
+const kRandomIdLength = 8;
 
 function genIdIfNeeded(
   sheet: GoogleAppsScript.Spreadsheet.Sheet,
