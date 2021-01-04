@@ -1,6 +1,8 @@
 export {
   kTasks,
   kPlan,
+  kArchivedTasks,
+  kArchivedPlan,
   kTitleColName,
   kIdColName,
   kDetailsColName,
@@ -25,10 +27,14 @@ export {
   EditEvent,
   findRowIndexById,
   format,
+  copyTo,
 };
 
+// Sheet names
 const kTasks = 'Tasks';
 const kPlan = 'Plan';
+const kArchivedTasks = 'Archived tasks';
+const kArchivedPlan = 'Archived plan';
 
 const kIdColName = 'id';
 const kTitleColName = 'title';
@@ -101,4 +107,13 @@ function findRowIndexById(
 
 function format(date: Date): string {
   return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
+}
+
+// Copy a range to a sheet as a new row next to the last row.
+function copyTo(
+  range: GoogleAppsScript.Spreadsheet.Range,
+  sheet: GoogleAppsScript.Spreadsheet.Sheet,
+): void {
+  const rowCount = sheet.getDataRange().getNumRows();
+  range.copyTo(sheet.getRange(rowCount + 1, 1));
 }

@@ -1,6 +1,9 @@
 import {
   EditEvent,
+  findRowIndexById,
   format,
+  kArchivedPlan,
+  kArchivedTasks,
   kCompleteDateColIndex,
   kIdColIndex,
   kPlan,
@@ -81,22 +84,30 @@ function testAll(): void {
       '', // progress
       '', // notes
     ]];
-    if (!rangeValuesMatch(planRow.getValues(), expectedPlanRowValues)) {
-      throw new Error(`Values don't match ${planRow.getValues()} != `
-          + `${expectedPlanRowValues}`);
-    }
+    expectValuesMatch(planRow.getValues(), expectedPlanRowValues);
     Logger.log('2. Test copy to plan passed.');
 
     // 3. Test mark as completed.
     planRow.getCell(1, kProgressColIndex).setValue(1);
     const planEditEvent = new TestEditEvent(null, null, planRow, spreadsheet);
     onEdit(planEditEvent);
-    const completeDateValue = taskRow.getCell(
-      1, kCompleteDateColIndex,
-    ).getValue();
+    const archivedTaskRow = spreadsheet
+      .getSheetByName(kArchivedTasks).getRange(2, 1, 1, kTasksColCount);
+    const completeDateValue = archivedTaskRow
+      .getCell(1, kCompleteDateColIndex).getValue();
     if (format(completeDateValue) !== today) {
       throw new Error('Unexpected complete date '
           + `${completeDateValue} != ${today}`);
+    }
+    const archivedPlanRow = spreadsheet
+      .getSheetByName(kArchivedPlan).getRange(2, 1, 1, kPlanColCount);
+    expectedPlanRowValues[0][kProgressColIndex - 1] = 1;
+    expectValuesMatch(archivedPlanRow.getValues(), expectedPlanRowValues);
+    const taskRowFound = findRowIndexById(tasksSheet, id);
+    const planRowFound = findRowIndexById(planSheet, id);
+    if (taskRowFound !== -1 || planRowFound !== -1) {
+      throw new Error(`Completed rows aren't deleted (${taskRowFound}, `
+          + `${planRowFound}).`);
     }
     Logger.log('3. Test mark as completed passed.');
   } finally {
@@ -104,16 +115,22 @@ function testAll(): void {
   }
 }
 
-function rangeValuesMatch(a1: any[][], a2: any[][]): boolean {
-  if (a1.length !== a2.length) {
+function expectValuesMatch(actual: any[][], expected: any[][]): void {
+  if (!valuesMatch(actual, expected)) {
+    throw new Error(`Values don't match ${actual} != ${expected}`);
+  }
+}
+
+function valuesMatch(actual: any[][], expected: any[][]): boolean {
+  if (actual.length !== expected.length) {
     return false;
   }
-  for (let i = 0; i < a1.length; i += 1) {
-    if (a1[i].length !== a2[i].length) {
+  for (let i = 0; i < actual.length; i += 1) {
+    if (actual[i].length !== expected[i].length) {
       return false;
     }
-    for (let j = 0; j < a1[i].length; j += 1) {
-      if (a1[i][j] !== a2[i][j]) {
+    for (let j = 0; j < actual[i].length; j += 1) {
+      if (actual[i][j] !== expected[i][j]) {
         return false;
       }
     }

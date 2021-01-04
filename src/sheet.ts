@@ -1,6 +1,8 @@
 import {
   kTasks,
   kPlan,
+  kArchivedPlan,
+  kArchivedTasks,
   kTasksColNames,
   kTasksColCount,
   kPlanColNames,
@@ -11,6 +13,7 @@ import {
   EditEvent,
   findRowIndexById,
   format,
+  copyTo,
 } from './common';
 
 import { initPlan, onPlanEdit } from './plan';
@@ -33,10 +36,12 @@ function createSheet(): GoogleAppsScript.Spreadsheet.Spreadsheet {
   sheet1.setName('Views');
   sheet2.setName(kTasks);
   sheet3.setName(kPlan);
-  sheet4.setName('Archived-Tasks');
-  sheet5.setName('Archived-Plan');
+  sheet4.setName(kArchivedTasks);
+  sheet5.setName(kArchivedPlan);
   initTasks(sheet2);
   initPlan(sheet3);
+  initTasks(sheet4);
+  initPlan(sheet5);
   ScriptApp.newTrigger('onEdit').forSpreadsheet(spreadsheet).onEdit().create();
   return spreadsheet;
 }
@@ -109,8 +114,8 @@ function copyToPlanIfStartedToday(
     return;
   }
   const copyRange = tasksSheet.getRange(rowIndex, 1, 1, kCommonColCount);
-  const planRowCount = planSheet.getDataRange().getNumRows();
-  copyRange.copyTo(planSheet.getRange(planRowCount + 1, 1));
+  Logger.log(`Copy ${taskId} from ${kTasks} to ${kPlan}`);
+  copyTo(copyRange, planSheet);
 }
 
 // No collision is expected for ~36^(length / 2) random IDs.

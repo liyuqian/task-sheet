@@ -1,7 +1,10 @@
 import {
+  copyTo,
   EditEvent,
   findRowIndexById,
   format,
+  kArchivedPlan,
+  kArchivedTasks,
   kCompleteDateColIndex,
   kIdColIndex,
   kPlanColCount,
@@ -31,7 +34,7 @@ function onPlanEdit(e: EditEvent): void {
 }
 
 // TODO NEXT:
-//   1. move to archieved tasks and plan
+//   1. test and handle multiple completed tasks and row index changes
 //   2. handle obsolete (in the tasks.ts?)
 function markCompletedIfSo(
   planSheet: GoogleAppsScript.Spreadsheet.Sheet,
@@ -45,14 +48,14 @@ function markCompletedIfSo(
     return;
   }
   Logger.log(`Try to mark ${id} as completed.`);
-  const taskSheet = planSheet.getParent().getSheetByName(kTasks);
-  const taskRowIndex = findRowIndexById(taskSheet, id);
+  const tasksSheet = planSheet.getParent().getSheetByName(kTasks);
+  const taskRowIndex = findRowIndexById(tasksSheet, id);
   if (taskRowIndex === -1) {
     const message = `Task ${id} not found in the ${kTasksColNames} sheet!`;
     SpreadsheetApp.getUi().alert(message);
     throw new Error(message);
   }
-  const taskRow = taskSheet.getRange(taskRowIndex, 1, 1, kTasksColCount);
+  const taskRow = tasksSheet.getRange(taskRowIndex, 1, 1, kTasksColCount);
   const completeDateCell = taskRow.getCell(1, kCompleteDateColIndex);
   if (!completeDateCell.isBlank()) {
     Logger.log(`Skip row ${taskRowIndex} with existing complete date `
@@ -60,4 +63,14 @@ function markCompletedIfSo(
     return;
   }
   completeDateCell.setValue(format(new Date()));
+
+  const archivedTasksSheet = planSheet
+    .getParent().getSheetByName(kArchivedTasks);
+  copyTo(taskRow, archivedTasksSheet);
+
+  const archivedPlanSheet = planSheet.getParent().getSheetByName(kArchivedPlan);
+  copyTo(fullRow, archivedPlanSheet);
+
+  tasksSheet.deleteRow(taskRowIndex);
+  planSheet.deleteRow(rowIndex);
 }
