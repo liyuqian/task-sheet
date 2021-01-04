@@ -30,6 +30,9 @@ function onPlanEdit(e: EditEvent): void {
   }
 }
 
+// TODO NEXT:
+//   1. move to archieved tasks and plan
+//   2. handle obsolete (in the tasks.ts?)
 function markCompletedIfSo(
   planSheet: GoogleAppsScript.Spreadsheet.Sheet,
   rowIndex: number,

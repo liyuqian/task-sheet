@@ -15,9 +15,14 @@ import {
 
 import { initPlan, onPlanEdit } from './plan';
 
-export { createSheet, deleteOldTriggers, onEdit };
+export {
+  createSheet,
+  deleteOldTriggers,
+  onEdit,
+  kRandomIdLength,
+};
 
-function createSheet(): void {
+function createSheet(): GoogleAppsScript.Spreadsheet.Spreadsheet {
   checkIntegrity();
   const spreadsheet = SpreadsheetApp.create('tasks');
   const sheet1 = spreadsheet.getActiveSheet();
@@ -33,6 +38,7 @@ function createSheet(): void {
   initTasks(sheet2);
   initPlan(sheet3);
   ScriptApp.newTrigger('onEdit').forSpreadsheet(spreadsheet).onEdit().create();
+  return spreadsheet;
 }
 
 // Be careful, this will remove all triggers associated with this project.
