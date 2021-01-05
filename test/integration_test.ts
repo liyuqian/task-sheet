@@ -6,6 +6,7 @@ import {
   kArchivedTasks,
   kCompleteDateColIndex,
   kIdColIndex,
+  kObsoleteDateColIndex,
   kPlan,
   kPlanColCount,
   kProgressColIndex,
@@ -15,7 +16,7 @@ import {
 } from '../src/common';
 
 import {
-  archiveCompleted,
+  archive,
   createSheet,
   kRandomIdLength,
   onEdit,
@@ -111,26 +112,57 @@ function testFlow(): void {
     }
     Logger.log('3. Test mark as completed passed.');
 
-    // 4. Test archive completed
-    archiveCompleted(spreadsheet);
-    const archivedTaskRow = spreadsheet
-      .getSheetByName(kArchivedTasks).getRange(2, 1, 1, kTasksColCount);
-    const archivedTaskId = archivedTaskRow.getCell(1, kIdColIndex).getValue();
-    if (archivedTaskId !== id) {
-      throw new Error(`Unexpected archivedTaskId ${archivedTaskId} != ${id}`);
-    }
-    const archivedPlanRow = spreadsheet
-      .getSheetByName(kArchivedPlan).getRange(2, 1, 1, kPlanColCount);
-    expectedPlanRowValues[0][kProgressColIndex - 1] = 1;
-    expectValuesMatch(archivedPlanRow.getValues(), expectedPlanRowValues);
-    const taskRowFound = findRowIndexById(tasksSheet, id);
-    const planRowFound = findRowIndexById(planSheet, id);
-    if (taskRowFound !== -1 || planRowFound !== -1) {
-      throw new Error(`Completed rows aren't deleted (${taskRowFound}, `
-          + `${planRowFound}).`);
-    }
+    // 4. Test archive
+    const obsoleteTasksRange = tasksSheet.getRange(3, 1, 2, kTasksColCount);
+    obsoleteTasksRange.setValues([kDummyTaskRow, kDummyTaskRow]);
+    obsoleteTasksRange.getCell(1, kStartDateColIndex).setValue(today);
+    obsoleteTasksRange.getCell(1, kObsoleteDateColIndex).setValue(today);
+    obsoleteTasksRange.getCell(2, kObsoleteDateColIndex).setValue(today);
+    const obsoleteEditEvent = new TestEditEvent(
+      null, null, obsoleteTasksRange, spreadsheet,
+    );
+    onEdit(obsoleteEditEvent);
+    const expectedArchivedTaskIds = [
+      id,
+      obsoleteTasksRange.getCell(1, kIdColIndex).getValue(),
+      obsoleteTasksRange.getCell(2, kIdColIndex).getValue(),
+    ];
+    const expectedArchivedPlanIds = [
+      id,
+      obsoleteTasksRange.getCell(1, kIdColIndex).getValue(),
+    ];
+    archive(spreadsheet);
+    checkArchived(
+      tasksSheet,
+      spreadsheet.getSheetByName(kArchivedTasks),
+      expectedArchivedTaskIds,
+    );
+    checkArchived(
+      planSheet,
+      spreadsheet.getSheetByName(kArchivedPlan),
+      expectedArchivedPlanIds,
+    );
   } finally {
     DriveApp.getFileById(spreadsheet.getId()).setTrashed(true);
+  }
+}
+
+function checkArchived(
+  originalSheet: GoogleAppsScript.Spreadsheet.Sheet,
+  archivedSheet: GoogleAppsScript.Spreadsheet.Sheet,
+  expectedArchivedIds: string[],
+): void {
+  for (let i = 0; i < expectedArchivedIds.length; i += 1) {
+    const archivedTaskRow = archivedSheet.getRange(2 + i, 1, 1, kTasksColCount);
+    const archivedTaskId = archivedTaskRow.getCell(1, kIdColIndex).getValue();
+    if (archivedTaskId !== expectedArchivedIds[i]) {
+      throw new Error(`Unexpected archivedTaskId ${archivedTaskId} != `
+        + `${expectedArchivedIds[i]} for row ${2 + i}`);
+    }
+    const taskRowFound = findRowIndexById(originalSheet, archivedTaskId);
+    if (taskRowFound !== -1) {
+      throw new Error(`Archived task isn't deleted on row ${taskRowFound}.`);
+    }
   }
 }
 
@@ -157,7 +189,7 @@ function testMultipleCompletion(): void {
       null, null, progressRange, spreadsheet,
     );
     onEdit(planEditEvent);
-    archiveCompleted(spreadsheet);
+    archive(spreadsheet);
     for (let i = 1; i <= kTestRowCount; i += 1) {
       const completeDate = spreadsheet
         .getSheetByName(kArchivedTasks)

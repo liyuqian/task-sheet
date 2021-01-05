@@ -23,6 +23,7 @@ export {
   kTitleColIndex,
   kStartDateColIndex,
   kCompleteDateColIndex,
+  kObsoleteDateColIndex,
   kProgressColIndex,
   EditEvent,
   findRowIndexById,
@@ -77,6 +78,7 @@ const kIdColIndex = kTasksColNames.indexOf(kIdColName) + 1;
 const kTitleColIndex = kTasksColNames.indexOf(kTitleColName) + 1;
 const kStartDateColIndex = kTasksColNames.indexOf(kStartDateColName) + 1;
 const kCompleteDateColIndex = kTasksColNames.indexOf(kCompleteDateColName) + 1;
+const kObsoleteDateColIndex = kTasksColNames.indexOf(kObsoleteDateColName) + 1;
 const kProgressColIndex = kPlanColNames.indexOf(kProgressColName) + 1;
 
 interface EditEvent {
