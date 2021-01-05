@@ -28,14 +28,20 @@ function initPlan(sheet: GoogleAppsScript.Spreadsheet.Sheet): void {
 
 function onPlanEdit(e: EditEvent): void {
   const sheet = e.range.getSheet();
-  for (let i = 1; i <= e.range.getNumRows(); i += 1) {
+  for (let i = e.range.getNumRows(); i >= 1; i -= 1) {
     markCompletedIfSo(sheet, e.range.getRowIndex() + i - 1);
   }
 }
 
+// This function removes completed tasks from tasks and plan sheets, and put
+// them into archived tasks and plan sheets. Therefore, outter function must
+// call this with decreasing rowIndex numbers. (Rows may be moved, missing if
+// rowIndex numbers are processed in an increasing order.) We also assume that
+// Google App Script will only execute one script at a time for a single
+// spreadsheet to avoid any data racing problems.
+//
 // TODO NEXT:
-//   1. test and handle multiple completed tasks and row index changes
-//   2. handle obsolete (in the tasks.ts?)
+//   handle obsolete (in the tasks.ts?)
 function markCompletedIfSo(
   planSheet: GoogleAppsScript.Spreadsheet.Sheet,
   rowIndex: number,

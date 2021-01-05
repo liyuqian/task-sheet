@@ -39,7 +39,7 @@ class TestEditEvent implements EditEvent {
 }
 
 const kTestTaskTitle = 'test title';
-const kDummyTaskValues = [[
+const kDummyTaskRow = [
   '', // id
   kTestTaskTitle,
   '', // description
@@ -49,9 +49,16 @@ const kDummyTaskValues = [[
   '', // start date
   '', // complete date
   '', // obsolete date
-]];
+];
+const kDummyTaskValues = [kDummyTaskRow];
 
 function testAll(): void {
+  testFlow();
+  testMultipleCompletion();
+}
+
+function testFlow(): void {
+  Logger.log('Start test flow.');
   const spreadsheet = createSheet();
   try {
     // 1. Test id generation.
@@ -110,6 +117,45 @@ function testAll(): void {
           + `${planRowFound}).`);
     }
     Logger.log('3. Test mark as completed passed.');
+  } finally {
+    DriveApp.getFileById(spreadsheet.getId()).setTrashed(true);
+  }
+}
+
+function testMultipleCompletion(): void {
+  Logger.log('Start test multiple completion.');
+  const spreadsheet = createSheet();
+  try {
+    const kTestRowCount = 3;
+    const tasksSheet = spreadsheet.getSheetByName(kTasks);
+    const rowValues = [...kDummyTaskRow];
+    const today = format(new Date());
+    rowValues[kStartDateColIndex - 1] = today;
+    const taskRows = tasksSheet.getRange(2, 1, kTestRowCount, kTasksColCount);
+    taskRows.setValues([rowValues, rowValues, rowValues]);
+    const taskEditEvent = new TestEditEvent(null, null, taskRows, spreadsheet);
+    onEdit(taskEditEvent);
+    const planSheet = spreadsheet.getSheetByName(kPlan);
+    const progressRange = planSheet
+      .getRange(2, kProgressColIndex, kTestRowCount, 1);
+    for (let i = 1; i <= kTestRowCount; i += 1) {
+      progressRange.getCell(i, 1).setValue(1);
+    }
+    const planEditEvent = new TestEditEvent(
+      null, null, progressRange, spreadsheet,
+    );
+    onEdit(planEditEvent);
+    for (let i = 1; i <= kTestRowCount; i += 1) {
+      const completeDate = spreadsheet
+        .getSheetByName(kArchivedTasks)
+        .getRange(1 + i, kCompleteDateColIndex, 1, 1)
+        .getValue();
+      if (format(completeDate) !== today) {
+        throw new Error(`Unexpected complete date ${completeDate} for row `
+          + `${1 + i}`);
+      }
+    }
+    Logger.log('Test multiple completion passed.');
   } finally {
     DriveApp.getFileById(spreadsheet.getId()).setTrashed(true);
   }
