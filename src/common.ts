@@ -26,6 +26,7 @@ export {
   kProgressColIndex,
   EditEvent,
   findRowIndexById,
+  findTaskRowById,
   format,
   copyTo,
 };
@@ -103,6 +104,19 @@ function findRowIndexById(
     throw new Error(message);
   }
   return ranges[0].getRowIndex();
+}
+
+function findTaskRowById(
+  id: string,
+  tasksSheet: GoogleAppsScript.Spreadsheet.Sheet,
+): GoogleAppsScript.Spreadsheet.Range {
+  const taskRowIndex = findRowIndexById(tasksSheet, id);
+  if (taskRowIndex === -1) {
+    const message = `Task ${id} not found in the ${kTasks} sheet!`;
+    SpreadsheetApp.getUi().alert(message);
+    throw new Error(message);
+  }
+  return tasksSheet.getRange(taskRowIndex, 1, 1, kTasksColCount);
 }
 
 function format(date: Date): string {

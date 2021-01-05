@@ -14,7 +14,12 @@ import {
   kTasksColCount,
 } from '../src/common';
 
-import { createSheet, kRandomIdLength, onEdit } from '../src/sheet';
+import {
+  archiveCompleted,
+  createSheet,
+  kRandomIdLength,
+  onEdit,
+} from '../src/sheet';
 
 export default { testAll };
 
@@ -98,13 +103,21 @@ function testFlow(): void {
     planRow.getCell(1, kProgressColIndex).setValue(1);
     const planEditEvent = new TestEditEvent(null, null, planRow, spreadsheet);
     onEdit(planEditEvent);
-    const archivedTaskRow = spreadsheet
-      .getSheetByName(kArchivedTasks).getRange(2, 1, 1, kTasksColCount);
-    const completeDateValue = archivedTaskRow
+    const completeDateValue = taskRow
       .getCell(1, kCompleteDateColIndex).getValue();
     if (format(completeDateValue) !== today) {
       throw new Error('Unexpected complete date '
           + `${completeDateValue} != ${today}`);
+    }
+    Logger.log('3. Test mark as completed passed.');
+
+    // 4. Test archive completed
+    archiveCompleted(spreadsheet);
+    const archivedTaskRow = spreadsheet
+      .getSheetByName(kArchivedTasks).getRange(2, 1, 1, kTasksColCount);
+    const archivedTaskId = archivedTaskRow.getCell(1, kIdColIndex).getValue();
+    if (archivedTaskId !== id) {
+      throw new Error(`Unexpected archivedTaskId ${archivedTaskId} != ${id}`);
     }
     const archivedPlanRow = spreadsheet
       .getSheetByName(kArchivedPlan).getRange(2, 1, 1, kPlanColCount);
@@ -116,7 +129,6 @@ function testFlow(): void {
       throw new Error(`Completed rows aren't deleted (${taskRowFound}, `
           + `${planRowFound}).`);
     }
-    Logger.log('3. Test mark as completed passed.');
   } finally {
     DriveApp.getFileById(spreadsheet.getId()).setTrashed(true);
   }
@@ -145,6 +157,7 @@ function testMultipleCompletion(): void {
       null, null, progressRange, spreadsheet,
     );
     onEdit(planEditEvent);
+    archiveCompleted(spreadsheet);
     for (let i = 1; i <= kTestRowCount; i += 1) {
       const completeDate = spreadsheet
         .getSheetByName(kArchivedTasks)

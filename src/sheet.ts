@@ -14,6 +14,9 @@ import {
   findRowIndexById,
   format,
   copyTo,
+  kPlanColCount,
+  kProgressColIndex,
+  findTaskRowById,
 } from './common';
 
 import { initPlan, onPlanEdit } from './plan';
@@ -22,9 +25,14 @@ export {
   createSheet,
   deleteOldTriggers,
   onEdit,
+  onOpen,
+  archiveCompleted,
   kRandomIdLength,
 };
 
+// TODO NEXT:
+//   1. handle obsolete (in the tasks.ts?)
+//   2. sync edits between Tasks and Plan?
 function createSheet(): GoogleAppsScript.Spreadsheet.Spreadsheet {
   checkIntegrity();
   const spreadsheet = SpreadsheetApp.create('tasks');
@@ -43,7 +51,45 @@ function createSheet(): GoogleAppsScript.Spreadsheet.Spreadsheet {
   initTasks(sheet4);
   initPlan(sheet5);
   ScriptApp.newTrigger('onEdit').forSpreadsheet(spreadsheet).onEdit().create();
+  ScriptApp.newTrigger('onOpen').forSpreadsheet(spreadsheet).onOpen().create();
   return spreadsheet;
+}
+
+function onOpen() {
+  const menu = SpreadsheetApp.getUi().createAddonMenu();
+  menu.addItem('Archive completed', 'archiveCompleted');
+  menu.addToUi();
+}
+
+// This function removes completed tasks from tasks and plan sheets, and put
+// them into archived tasks and plan sheets. Therefore, rows must be removed
+// from bottom to top to avoid index conflicts. We also assume that no other
+// edits may happen during this function, or there will be data racing problems.
+function archiveCompleted(
+  ss: GoogleAppsScript.Spreadsheet.Spreadsheet,
+): void {
+  Logger.log('Archive completed');
+  const spreadsheet = ss || SpreadsheetApp.getActive();
+  const tasksSheet = spreadsheet.getSheetByName(kTasks);
+  const planSheet = spreadsheet.getSheetByName(kPlan);
+  const archivedTasksSheet = spreadsheet.getSheetByName(kArchivedTasks);
+  const archivedPlanSheet = spreadsheet.getSheetByName(kArchivedPlan);
+  const planRange = planSheet.getDataRange();
+  let archiveCount = 0;
+  for (let i = planRange.getNumRows(); i >= 2; i -= 1) {
+    const row = planSheet.getRange(i, 1, 1, kPlanColCount);
+    const progress = parseFloat(row.getCell(1, kProgressColIndex).getValue());
+    if (progress === 1) {
+      const id = row.getCell(1, kIdColIndex).getValue();
+      const taskRow = findTaskRowById(id, tasksSheet);
+      copyTo(taskRow, archivedTasksSheet);
+      copyTo(row, archivedPlanSheet);
+      tasksSheet.deleteRow(taskRow.getRowIndex());
+      planSheet.deleteRow(i);
+      archiveCount += 1;
+    }
+  }
+  SpreadsheetApp.getUi().alert(`Archived ${archiveCount} tasks.`);
 }
 
 // Be careful, this will remove all triggers associated with this project.

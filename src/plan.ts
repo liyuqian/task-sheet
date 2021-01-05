@@ -1,18 +1,13 @@
 import {
-  copyTo,
   EditEvent,
-  findRowIndexById,
+  findTaskRowById,
   format,
-  kArchivedPlan,
-  kArchivedTasks,
   kCompleteDateColIndex,
   kIdColIndex,
   kPlanColCount,
   kPlanColNames,
   kProgressColIndex,
   kTasks,
-  kTasksColCount,
-  kTasksColNames,
 } from './common';
 
 export { initPlan, onPlanEdit };
@@ -33,15 +28,6 @@ function onPlanEdit(e: EditEvent): void {
   }
 }
 
-// This function removes completed tasks from tasks and plan sheets, and put
-// them into archived tasks and plan sheets. Therefore, outter function must
-// call this with decreasing rowIndex numbers. (Rows may be moved, missing if
-// rowIndex numbers are processed in an increasing order.) We also assume that
-// Google App Script will only execute one script at a time for a single
-// spreadsheet to avoid any data racing problems.
-//
-// TODO NEXT:
-//   handle obsolete (in the tasks.ts?)
 function markCompletedIfSo(
   planSheet: GoogleAppsScript.Spreadsheet.Sheet,
   rowIndex: number,
@@ -55,28 +41,12 @@ function markCompletedIfSo(
   }
   Logger.log(`Try to mark ${id} as completed.`);
   const tasksSheet = planSheet.getParent().getSheetByName(kTasks);
-  const taskRowIndex = findRowIndexById(tasksSheet, id);
-  if (taskRowIndex === -1) {
-    const message = `Task ${id} not found in the ${kTasksColNames} sheet!`;
-    SpreadsheetApp.getUi().alert(message);
-    throw new Error(message);
-  }
-  const taskRow = tasksSheet.getRange(taskRowIndex, 1, 1, kTasksColCount);
+  const taskRow = findTaskRowById(id, tasksSheet);
   const completeDateCell = taskRow.getCell(1, kCompleteDateColIndex);
   if (!completeDateCell.isBlank()) {
-    Logger.log(`Skip row ${taskRowIndex} with existing complete date `
+    Logger.log(`Skip row ${taskRow.getRowIndex()} with existing complete date `
         + `${completeDateCell.getValue()}`);
     return;
   }
   completeDateCell.setValue(format(new Date()));
-
-  const archivedTasksSheet = planSheet
-    .getParent().getSheetByName(kArchivedTasks);
-  copyTo(taskRow, archivedTasksSheet);
-
-  const archivedPlanSheet = planSheet.getParent().getSheetByName(kArchivedPlan);
-  copyTo(fullRow, archivedPlanSheet);
-
-  tasksSheet.deleteRow(taskRowIndex);
-  planSheet.deleteRow(rowIndex);
 }
