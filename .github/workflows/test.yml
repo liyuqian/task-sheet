@@ -1,0 +1,32 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - '*'
+  schedule:
+    # Run CI tests every day to make sure it's not stale
+    - cron: '0 0 * * *'
+
+jobs:
+  test:
+    name: Integration tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # The following credentials emulate the environment achieved by
+      # "https://github.com/liyuqian/performance-newsletter#setup".
+      - name: Setup credentials
+        env:
+          CLASP_JSON: ${{ secrets.CLASP_JSON }}
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+          GLOBAL_CLASPRC_JSON: ${{ secrets.GLOBAL_CLASPRC_JSON }}
+        run: |
+          echo $CLASP_JSON > .clasp.json
+          echo $CLASPRC_JSON > .clasprc.json
+          echo $GLOBAL_CLASPRC_JSON > ~/.clasprc.json
+      - name: Run test script
+        run: bash test/ci_test.sh

@@ -1,3 +1,7 @@
+secret
+.clasprc.json
+.clasp.json
+
 # Logs
 logs
 *.log

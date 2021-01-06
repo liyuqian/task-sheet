@@ -58,12 +58,13 @@ const kDummyTaskRow = [
 ];
 const kDummyTaskValues = [kDummyTaskRow];
 
-function testAll(): void {
+function testAll(): string {
   testFlow();
   testMultipleCompletion();
+  return 'All tests passed.';
 }
 
-function testFlow(): void {
+function testFlow(): string {
   Logger.log('Start test flow.');
   const spreadsheet = createSheet();
   try {
@@ -142,6 +143,7 @@ function testFlow(): void {
       spreadsheet.getSheetByName(kArchivedPlan),
       expectedArchivedPlanIds,
     );
+    return 'Flow test passed.';
   } finally {
     DriveApp.getFileById(spreadsheet.getId()).setTrashed(true);
   }
@@ -166,7 +168,7 @@ function checkArchived(
   }
 }
 
-function testMultipleCompletion(): void {
+function testMultipleCompletion(): string {
   Logger.log('Start test multiple completion.');
   const spreadsheet = createSheet();
   try {
@@ -201,6 +203,7 @@ function testMultipleCompletion(): void {
       }
     }
     Logger.log('Test multiple completion passed.');
+    return 'Multiple completion test passed.';
   } finally {
     DriveApp.getFileById(spreadsheet.getId()).setTrashed(true);
   }

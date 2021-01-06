@@ -1,0 +1,1 @@
+Please see .github/workflows/test.yml and ci_test.sh for how to set up and run.
