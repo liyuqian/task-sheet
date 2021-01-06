@@ -21,6 +21,7 @@ export {
   kCommonColCount,
   kIdColIndex,
   kTitleColIndex,
+  kDueDateColIndex,
   kStartDateColIndex,
   kCompleteDateColIndex,
   kObsoleteDateColIndex,
@@ -76,6 +77,7 @@ const kCommonColCount = 3; // identical columns between tasks and plan sheets
 // All indices below are 1-based instead 0-based.
 const kIdColIndex = kTasksColNames.indexOf(kIdColName) + 1;
 const kTitleColIndex = kTasksColNames.indexOf(kTitleColName) + 1;
+const kDueDateColIndex = kTasksColNames.indexOf(kDueDateColName) + 1;
 const kStartDateColIndex = kTasksColNames.indexOf(kStartDateColName) + 1;
 const kCompleteDateColIndex = kTasksColNames.indexOf(kCompleteDateColName) + 1;
 const kObsoleteDateColIndex = kTasksColNames.indexOf(kObsoleteDateColName) + 1;

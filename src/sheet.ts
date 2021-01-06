@@ -18,6 +18,8 @@ import {
   kProgressColIndex,
   findTaskRowById,
   kObsoleteDateColIndex,
+  kCompleteDateColIndex,
+  kDueDateColIndex,
 } from './common';
 
 import { initPlan, onPlanEdit } from './plan';
@@ -28,12 +30,12 @@ export {
   onEdit,
   onOpen,
   archive,
+  filterDueSoon,
   kRandomIdLength,
 };
 
 // TODO NEXT:
-//   1. Create views.
-//   2. sync edits between Tasks and Plan?
+//   sync edits between Tasks and Plan?
 function createSheet(): GoogleAppsScript.Spreadsheet.Spreadsheet {
   checkIntegrity();
   const spreadsheet = SpreadsheetApp.create('tasks');
@@ -41,25 +43,36 @@ function createSheet(): GoogleAppsScript.Spreadsheet.Spreadsheet {
   const sheet2 = spreadsheet.insertSheet();
   const sheet3 = spreadsheet.insertSheet();
   const sheet4 = spreadsheet.insertSheet();
-  const sheet5 = spreadsheet.insertSheet();
-  sheet1.setName('Views');
-  sheet2.setName(kTasks);
-  sheet3.setName(kPlan);
-  sheet4.setName(kArchivedTasks);
-  sheet5.setName(kArchivedPlan);
-  initTasks(sheet2);
-  initPlan(sheet3);
-  initTasks(sheet4);
-  initPlan(sheet5);
+  sheet1.setName(kTasks);
+  sheet2.setName(kPlan);
+  sheet3.setName(kArchivedTasks);
+  sheet4.setName(kArchivedPlan);
+  initTasks(sheet1);
+  initPlan(sheet2);
+  initTasks(sheet3);
+  initPlan(sheet4);
   ScriptApp.newTrigger('onEdit').forSpreadsheet(spreadsheet).onEdit().create();
   ScriptApp.newTrigger('onOpen').forSpreadsheet(spreadsheet).onOpen().create();
   return spreadsheet;
 }
 
-function onOpen() {
+function onOpen(): void {
   const menu = SpreadsheetApp.getUi().createAddonMenu();
   menu.addItem('Archive completed and obsolete tasks', 'archive');
+  menu.addItem('Filter due soon tasks', 'filterDueSoon');
   menu.addToUi();
+}
+
+function filterDueSoon(ss: GoogleAppsScript.Spreadsheet.Spreadsheet): void {
+  const spreadsheet = ss || SpreadsheetApp.getActive();
+  const tasksSheet = spreadsheet.getSheetByName(kTasks);
+  const filter = tasksSheet.getDataRange().createFilter();
+  const emptyCriteria = SpreadsheetApp
+    .newFilterCriteria().whenCellEmpty().build();
+  filter.setColumnFilterCriteria(kCompleteDateColIndex, emptyCriteria);
+  filter.setColumnFilterCriteria(kObsoleteDateColIndex, emptyCriteria);
+  filter.sort(kDueDateColIndex, true);
+  spreadsheet.setActiveSheet(tasksSheet);
 }
 
 function archive(ss: GoogleAppsScript.Spreadsheet.Spreadsheet): void {
