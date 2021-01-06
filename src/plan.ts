@@ -1,16 +1,22 @@
 import {
+  copyTo,
   EditEvent,
+  findRowIndexById,
   findTaskRowById,
   format,
+  kCommonColCount,
   kCompleteDateColIndex,
   kIdColIndex,
+  kPlan,
   kPlanColCount,
   kPlanColNames,
   kProgressColIndex,
+  kStartDateColIndex,
   kTasks,
+  kTasksColCount,
 } from './common';
 
-export { initPlan, onPlanEdit };
+export { initPlan, onPlanEdit, copyToPlanIfStartedToday };
 
 function initPlan(sheet: GoogleAppsScript.Spreadsheet.Sheet): void {
   sheet.setFrozenRows(1);
@@ -49,4 +55,33 @@ function markCompletedIfSo(
     return;
   }
   completeDateCell.setValue(format(new Date()));
+}
+
+function copyToPlanIfStartedToday(
+  tasksSheet: GoogleAppsScript.Spreadsheet.Sheet,
+  taskRowIndex: number,
+): void {
+  const fullRow = tasksSheet.getRange(taskRowIndex, 1, 1, kTasksColCount);
+  const startDateCell = fullRow.getCell(1, kStartDateColIndex);
+  const taskId: string = fullRow.getCell(1, kIdColIndex).getValue();
+  if (startDateCell.isBlank()) {
+    Logger.log(`Skip ${taskId} as start date is blank.`);
+    return;
+  }
+  const startDate = new Date(startDateCell.getValue());
+  const today = new Date();
+  if (format(startDate) !== format(today)) {
+    Logger.log(`Skip ${taskId} as ${format(startDate)} is not today.`);
+    return;
+  }
+
+  const planSheet = tasksSheet.getParent().getSheetByName(kPlan);
+  const findResult = findRowIndexById(planSheet, taskId);
+  if (findResult !== -1) {
+    Logger.log(`Skip existing ${taskId} at row ${findResult}.`);
+    return;
+  }
+  const copyRange = tasksSheet.getRange(taskRowIndex, 1, 1, kCommonColCount);
+  Logger.log(`Copy ${taskId} from ${kTasks} to ${kPlan}`);
+  copyTo(copyRange, planSheet);
 }

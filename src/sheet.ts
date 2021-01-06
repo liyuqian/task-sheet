@@ -9,10 +9,8 @@ import {
   kCommonColCount,
   kIdColIndex,
   kTitleColIndex,
-  kStartDateColIndex,
   EditEvent,
   findRowIndexById,
-  format,
   copyTo,
   kPlanColCount,
   kProgressColIndex,
@@ -22,7 +20,7 @@ import {
   kDueDateColIndex,
 } from './common';
 
-import { initPlan, onPlanEdit } from './plan';
+import { copyToPlanIfStartedToday, initPlan, onPlanEdit } from './plan';
 
 export {
   createSheet,
@@ -202,35 +200,6 @@ function onTasksEdit(e: EditEvent): void {
     genIdIfNeeded(sheet, e.range.getRowIndex() + i - 1);
     copyToPlanIfStartedToday(sheet, e.range.getRowIndex() + i - 1);
   }
-}
-
-function copyToPlanIfStartedToday(
-  tasksSheet: GoogleAppsScript.Spreadsheet.Sheet,
-  rowIndex: number,
-): void {
-  const fullRow = tasksSheet.getRange(rowIndex, 1, 1, kTasksColCount);
-  const startDateCell = fullRow.getCell(1, kStartDateColIndex);
-  const taskId: string = fullRow.getCell(1, kIdColIndex).getValue();
-  if (startDateCell.isBlank()) {
-    Logger.log(`Skip ${taskId} as start date is blank.`);
-    return;
-  }
-  const startDate = new Date(startDateCell.getValue());
-  const today = new Date();
-  if (format(startDate) !== format(today)) {
-    Logger.log(`Skip ${taskId} as ${format(startDate)} is not today.`);
-    return;
-  }
-
-  const planSheet = tasksSheet.getParent().getSheetByName(kPlan);
-  const findResult = findRowIndexById(planSheet, taskId);
-  if (findResult !== -1) {
-    Logger.log(`Skip existing ${taskId} at row ${findResult}.`);
-    return;
-  }
-  const copyRange = tasksSheet.getRange(rowIndex, 1, 1, kCommonColCount);
-  Logger.log(`Copy ${taskId} from ${kTasks} to ${kPlan}`);
-  copyTo(copyRange, planSheet);
 }
 
 // No collision is expected for ~36^(length / 2) random IDs.
