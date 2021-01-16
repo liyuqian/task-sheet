@@ -159,12 +159,17 @@ function archiveObsolete(
   return archiveCount;
 }
 
-// Be careful, this will remove all triggers associated with this project.
-// Hence all previous spreadsheets created by this project will lose their
-// triggers.
-function deleteOldTriggers(): void {
+// Be careful, if spreadsheetId isn't given, this will remove all triggers
+// associated with this project. Hence all previous spreadsheets created by this
+// project will lose their triggers.
+function deleteOldTriggers(spreadsheetId: string): void {
   const triggers = ScriptApp.getProjectTriggers();
-  triggers.forEach((trigger) => ScriptApp.deleteTrigger(trigger));
+  triggers.forEach((trigger) => {
+    if (spreadsheetId == null
+        || trigger.getTriggerSourceId() === spreadsheetId) {
+      ScriptApp.deleteTrigger(trigger);
+    }
+  });
 }
 
 function checkIntegrity(): void {
