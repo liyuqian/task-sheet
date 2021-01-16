@@ -1,6 +1,7 @@
 secret
 .clasprc.json
 .clasp.json
+stderr.log
 
 # Logs
 logs

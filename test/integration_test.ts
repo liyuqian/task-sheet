@@ -18,6 +18,7 @@ import {
 import {
   archive,
   createSheet,
+  deleteOldTriggers,
   kRandomIdLength,
   onEdit,
 } from '../src/sheet';
@@ -145,6 +146,7 @@ function testFlow(): string {
     );
     return 'Flow test passed.';
   } finally {
+    deleteOldTriggers(spreadsheet.getId());
     DriveApp.getFileById(spreadsheet.getId()).setTrashed(true);
   }
 }
@@ -205,6 +207,7 @@ function testMultipleCompletion(): string {
     Logger.log('Test multiple completion passed.');
     return 'Multiple completion test passed.';
   } finally {
+    deleteOldTriggers(spreadsheet.getId());
     DriveApp.getFileById(spreadsheet.getId()).setTrashed(true);
   }
 }

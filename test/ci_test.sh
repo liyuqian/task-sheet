@@ -6,7 +6,7 @@ COMMANDS=(
   'npm i -S @types/google-apps-script'
   'npx eslint .'
   'clasp push'
-  'clasp run testAll'
+  'bash test/check_clasp_run.sh testAll'
 )
 
 for ((i = 0; i < ${#COMMANDS[@]}; i += 1))
