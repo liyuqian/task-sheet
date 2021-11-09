@@ -39,8 +39,10 @@ const kPlan = 'Plan';
 const kArchivedTasks = 'Archived tasks';
 const kArchivedPlan = 'Archived plan';
 
+// In the spreadsheet, please feel free to hide any columns that are not needed.
 const kIdColName = 'id';
 const kTitleColName = 'title';
+const kOwnerColName = 'owner';
 const kDetailsColName = 'details';
 const kDueDateColName = 'due date';
 const kLabelsColName = 'labels';
@@ -51,28 +53,29 @@ const kObsoleteDateColName = 'obsolete date';
 const kProgressColName = 'progress';
 const kNotesColName = 'notes';
 
-const kTasksColNames = [
+const kCommonColNames = [
   kIdColName,
   kTitleColName,
+  kOwnerColName,
   kDetailsColName,
+];
+const kCommonColCount = kCommonColNames.length;
+
+const kTasksColNames = kCommonColNames.concat([
   kDueDateColName,
   kLabelsColName,
   kDependenciesColName,
   kStartDateColName,
   kCompleteDateColName,
   kObsoleteDateColName,
-];
+]);
 const kTasksColCount = kTasksColNames.length;
 
-const kPlanColNames = [
-  kIdColName,
-  kTitleColName,
-  kDetailsColName,
+const kPlanColNames = kCommonColNames.concat([
   kProgressColName,
   kNotesColName,
-];
+]);
 const kPlanColCount = kPlanColNames.length;
-const kCommonColCount = 3; // identical columns between tasks and plan sheets
 
 // All indices below are 1-based instead 0-based.
 const kIdColIndex = kTasksColNames.indexOf(kIdColName) + 1;

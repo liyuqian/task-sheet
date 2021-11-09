@@ -46,9 +46,11 @@ class TestEditEvent implements EditEvent {
 }
 
 const kTestTaskTitle = 'test title';
+const kTestTaskOwner = 'Alice';
 const kDummyTaskRow = [
   '', // id
   kTestTaskTitle,
+  kTestTaskOwner,
   '', // description
   '', // due date
   '', // labels
@@ -95,6 +97,7 @@ function testFlow(): string {
     const expectedPlanRowValues = [[
       id,
       kTestTaskTitle,
+      kTestTaskOwner,
       '', // details
       '', // progress
       '', // notes
