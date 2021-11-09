@@ -8,9 +8,22 @@
     "typescript": "^4.1.3"
   },
   "dependencies": {
-    "@types/google-apps-script": "^1.0.20"
+    "@babel/core": "^7.12.10",
+    "@babel/plugin-transform-runtime": "^7.12.10",
+    "@babel/preset-env": "^7.12.11",
+    "@babel/preset-typescript": "^7.12.7",
+    "@google/clasp": "^2.4.1",
+    "@rollup/plugin-babel": "^5.2.2",
+    "@rollup/plugin-node-resolve": "^11.0.1",
+    "@types/google-apps-script": "^1.0.20",
+    "@types/node": "^12.19.9",
+    "rollup": "^2.35.1",
+    "typescript": "^4.1.3"
   },
   "scripts": {
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "build": "rollup --config",
+    "deploy": "clasp push",
+    "test": "bash test/check_clasp_run.sh testAll"
   }
 }

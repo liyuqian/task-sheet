@@ -9,9 +9,9 @@ module.exports = {
   rules: {
     'max-len': ['error', { code: 80 }],
     '@typescript-eslint/no-use-before-define': [
-      2, 
+      2,
       { 'functions': false, 'classes': false },
     ],
-    // 'import/prefer-default-export': ['off']
+    'import/prefer-default-export': ['off']
   }
 };

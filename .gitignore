@@ -2,6 +2,8 @@ secret
 .clasprc.json
 .clasp.json
 stderr.log
+build/main.js
+package-lock.json
 
 # Logs
 logs

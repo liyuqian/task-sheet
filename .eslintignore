@@ -1,2 +1,7 @@
 node_modules
 .eslintrc.js
+babel.config.js
+rollup.config.js
+build/_.js
+build/main.js
+src/main.ts

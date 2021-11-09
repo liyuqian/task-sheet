@@ -23,7 +23,7 @@ import {
   onEdit,
 } from '../src/sheet';
 
-export default { testAll };
+export { testAll };
 
 type Range = GoogleAppsScript.Spreadsheet.Range;
 type Spreadsheet = GoogleAppsScript.Spreadsheet.Spreadsheet;
