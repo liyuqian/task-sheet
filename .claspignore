@@ -3,5 +3,5 @@
 
 # except
 !appsscript.json
-!src/*.ts
-!test/*.ts
+!build/_.js
+!build/main.js

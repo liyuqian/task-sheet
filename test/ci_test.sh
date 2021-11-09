@@ -3,10 +3,11 @@ set -e
 
 COMMANDS=(
   'sudo npm install -g @google/clasp'
-  'npm i -S @types/google-apps-script'
-  'npx eslint .'
-  'clasp push'
-  'bash test/check_clasp_run.sh testAll'
+  'npm install'
+  'npm run lint'
+  'npm run build'
+  'npm run deploy'
+  'npm run test'
 )
 
 for ((i = 0; i < ${#COMMANDS[@]}; i += 1))
